@@ -1,2 +1,586 @@
-# MirrorFlow-SaaS-
-Real-time Binance Futures copy-trading engine — Masters trade, Followers mirror automatically via IP-whitelisted, trade-only API keys.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MirrorFlow — Binance Futures Copy Trading Infrastructure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --bg: #0A0F14;
+    --surface: #101820;
+    --surface-2: #141D27;
+    --border: #202B36;
+    --text: #E7EDF2;
+    --text-muted: #7C8B99;
+    --text-dim: #4A5964;
+    --master: #35D0A0;
+    --master-dim: rgba(53,208,160,0.12);
+    --follower: #4F8CFF;
+    --follower-dim: rgba(79,140,255,0.12);
+    --risk: #FF6B5C;
+    --risk-dim: rgba(255,107,92,0.12);
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(53,208,160,0.07), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 85% 10%, rgba(79,140,255,0.06), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a{ color:inherit; text-decoration:none; }
+  ul{ list-style:none; }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  @media (max-width: 720px){ .wrap{ padding: 0 20px; } }
+
+  :focus-visible{ outline: 2px solid var(--master); outline-offset: 3px; }
+
+  /* ---------- NAV ---------- */
+  header{
+    position: sticky; top:0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(10,15,20,0.72);
+    border-bottom: 1px solid var(--border);
+  }
+  nav.wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height: 72px;
+  }
+  .logo{ display:flex; align-items:center; gap:10px; font-family: var(--font-display); font-weight:700; font-size: 1.15rem; letter-spacing: -0.02em; }
+  .logo-mark{
+    width: 26px; height: 26px; position:relative; flex-shrink:0;
+  }
+  .logo-mark svg{ width:100%; height:100%; }
+  .nav-links{ display:flex; gap: 32px; align-items:center; }
+  .nav-links a{ font-size: 0.9rem; color: var(--text-muted); transition: color .2s; }
+  .nav-links a:hover{ color: var(--text); }
+  .nav-cta{
+    font-family: var(--font-mono); font-size: 0.82rem; font-weight:500;
+    background: var(--text); color: var(--bg);
+    padding: 9px 18px; border-radius: 6px;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .nav-cta:hover{ transform: translateY(-1px); box-shadow: 0 6px 20px rgba(53,208,160,0.25); }
+  .nav-toggle{ display:none; }
+
+  @media (max-width: 860px){
+    .nav-links{ display:none; }
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{ padding: 88px 0 60px; position:relative; overflow:hidden; }
+  .hero-grid{ display:grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items:center; }
+  @media (max-width: 980px){ .hero-grid{ grid-template-columns:1fr; } }
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family: var(--font-mono); font-size: 0.75rem; color: var(--master);
+    background: var(--master-dim); border:1px solid rgba(53,208,160,0.3);
+    padding: 6px 12px; border-radius: 100px; margin-bottom: 22px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background: var(--master); box-shadow: 0 0 8px var(--master); animation: pulse-dot 1.8s infinite; }
+  @keyframes pulse-dot{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+
+  h1{
+    font-family: var(--font-display); font-weight:700;
+    font-size: clamp(2.3rem, 4.4vw, 3.6rem);
+    letter-spacing: -0.03em; line-height: 1.05;
+    margin-bottom: 22px;
+  }
+  h1 .accent{ color: var(--master); }
+  h1 .accent2{ color: var(--follower); }
+
+  .hero p.lead{ font-size: 1.05rem; color: var(--text-muted); max-width: 480px; margin-bottom: 32px; }
+
+  .hero-ctas{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom: 40px; }
+  .btn-primary, .btn-secondary{
+    font-family: var(--font-body); font-weight:600; font-size: 0.92rem;
+    padding: 13px 24px; border-radius: 8px; display:inline-flex; align-items:center; gap:8px;
+    transition: transform .15s, box-shadow .15s, background .2s;
+  }
+  .btn-primary{ background: var(--master); color: #05130E; }
+  .btn-primary:hover{ transform: translateY(-2px); box-shadow: 0 10px 30px rgba(53,208,160,0.3); }
+  .btn-secondary{ border: 1px solid var(--border); color: var(--text); }
+  .btn-secondary:hover{ border-color: var(--follower); background: var(--follower-dim); }
+
+  .hero-stats{ display:flex; gap: 32px; }
+  .hero-stat .num{ font-family: var(--font-mono); font-size: 1.4rem; font-weight:600; }
+  .hero-stat .label{ font-size: 0.78rem; color: var(--text-dim); margin-top:2px; }
+
+  /* ---------- MIRROR TAPE (signature element) ---------- */
+  .tape-card{
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 22px; position:relative;
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.6);
+  }
+  .tape-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  .tape-head .title{ font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); text-transform:uppercase; letter-spacing: 0.08em; }
+  .tape-head .latency{ font-family: var(--font-mono); font-size: 0.78rem; color: var(--master); display:flex; align-items:center; gap:6px; }
+
+  .tape-row{
+    display:grid; grid-template-columns: 1fr 34px 1fr; align-items:center; gap: 10px;
+    padding: 14px 0; border-bottom: 1px dashed var(--border);
+  }
+  .tape-row:last-child{ border-bottom:none; }
+
+  .ticket{
+    border-radius: 10px; padding: 12px 14px; font-family: var(--font-mono); font-size: 0.8rem;
+    border: 1px solid;
+  }
+  .ticket.master{ background: var(--master-dim); border-color: rgba(53,208,160,0.35); }
+  .ticket.follower{ background: var(--follower-dim); border-color: rgba(79,140,255,0.35); }
+  .ticket .role{ font-size: 0.65rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.75; margin-bottom: 4px; }
+  .ticket.master .role{ color: var(--master); }
+  .ticket.follower .role{ color: var(--follower); }
+  .ticket .pair{ font-weight:600; color: var(--text); }
+  .ticket .meta{ color: var(--text-muted); font-size: 0.72rem; margin-top: 3px; }
+  .ticket .side-long{ color: var(--master); }
+  .ticket .side-short{ color: var(--risk); }
+
+  .beam{ position:relative; height: 2px; background: var(--border); }
+  .beam::after{
+    content:''; position:absolute; top:-2px; left:0; width:6px; height:6px; border-radius:50%;
+    background: var(--follower); box-shadow: 0 0 10px var(--follower);
+    animation: beam-move 1.6s ease-in-out infinite;
+  }
+  .tape-row:nth-child(2) .beam::after{ animation-delay: .3s; }
+  .tape-row:nth-child(3) .beam::after{ animation-delay: .9s; }
+  @keyframes beam-move{ 0%{ left:0; opacity:0; } 15%{opacity:1;} 85%{opacity:1;} 100%{ left: calc(100% - 6px); opacity:0; } }
+
+  .tape-foot{ margin-top: 16px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); }
+
+  /* ---------- SECTION SHARED ---------- */
+  section{ padding: 90px 0; }
+  .section-head{ max-width: 620px; margin-bottom: 52px; }
+  .section-tag{ font-family: var(--font-mono); font-size: 0.75rem; color: var(--follower); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; }
+  h2{ font-family: var(--font-display); font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight:700; letter-spacing:-0.02em; margin-bottom: 14px; }
+  .section-head p{ color: var(--text-muted); font-size: 1rem; }
+
+  hr.rule{ border:none; border-top:1px solid var(--border); }
+
+  /* ---------- FLOW (how it works) ---------- */
+  .flow{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 860px){ .flow{ grid-template-columns: 1fr; } }
+  .flow-step{
+    background: var(--surface); border:1px solid var(--border); border-radius: 14px; padding: 26px;
+    position: relative;
+  }
+  .flow-step .step-num{ font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-dim); margin-bottom: 16px; }
+  .flow-step h3{ font-family: var(--font-display); font-size: 1.1rem; margin-bottom: 10px; }
+  .flow-step p{ color: var(--text-muted); font-size: 0.9rem; }
+  .flow-step .icon{ width: 34px; height:34px; margin-bottom:16px; color: var(--master); }
+
+  /* ---------- SECURITY ---------- */
+  .security{ background: var(--surface-2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .sec-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items:start; }
+  @media (max-width: 900px){ .sec-grid{ grid-template-columns:1fr; } }
+
+  .sec-list{ display:flex; flex-direction:column; gap: 22px; }
+  .sec-item{ display:flex; gap: 16px; }
+  .sec-item .ic{ flex-shrink:0; width:38px; height:38px; border-radius:9px; background: var(--master-dim); border:1px solid rgba(53,208,160,0.3); display:flex; align-items:center; justify-content:center; color: var(--master); }
+  .sec-item h4{ font-family: var(--font-display); font-size: 1rem; margin-bottom: 4px; }
+  .sec-item p{ color: var(--text-muted); font-size: 0.88rem; }
+
+  .console{
+    background: #0C1319; border:1px solid var(--border); border-radius: 14px; overflow:hidden;
+    box-shadow: 0 30px 80px -30px rgba(0,0,0,0.7);
+  }
+  .console-head{ display:flex; gap:6px; padding: 12px 16px; border-bottom:1px solid var(--border); }
+  .console-head span{ width:10px; height:10px; border-radius:50%; background: var(--border); }
+  .console-body{ font-family: var(--font-mono); font-size: 0.8rem; padding: 20px; color: var(--text-muted); line-height:1.9; }
+  .console-body .k{ color: var(--follower); }
+  .console-body .v{ color: var(--text); }
+  .console-body .ok{ color: var(--master); }
+  .console-body .cm{ color: var(--text-dim); }
+
+  /* ---------- FEATURES ---------- */
+  .feat-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); border:1px solid var(--border); border-radius: 14px; overflow:hidden; }
+  @media (max-width: 900px){ .feat-grid{ grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 560px){ .feat-grid{ grid-template-columns: 1fr; } }
+  .feat{ background: var(--surface); padding: 28px 24px; }
+  .feat .icon{ width:28px; height:28px; color: var(--follower); margin-bottom: 18px; }
+  .feat h4{ font-family: var(--font-display); font-size: 0.98rem; margin-bottom: 8px; }
+  .feat p{ color: var(--text-muted); font-size: 0.85rem; }
+
+  /* ---------- PRICING ---------- */
+  .plans{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media (max-width: 900px){ .plans{ grid-template-columns:1fr; } }
+  .plan{ background: var(--surface); border:1px solid var(--border); border-radius: 16px; padding: 30px 26px; display:flex; flex-direction:column; }
+  .plan.highlight{ border-color: rgba(53,208,160,0.5); box-shadow: 0 0 0 1px rgba(53,208,160,0.25), 0 30px 60px -30px rgba(53,208,160,0.25); position:relative; }
+  .plan.highlight::before{
+    content:'RECOMMENDED'; position:absolute; top:-11px; left:26px; font-family: var(--font-mono); font-size:0.62rem; letter-spacing:0.1em;
+    background: var(--master); color:#05130E; padding: 4px 10px; border-radius: 100px;
+  }
+  .plan .role{ font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-bottom: 10px; }
+  .plan h3{ font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 6px; }
+  .plan .price{ font-family: var(--font-mono); font-size: 1.9rem; font-weight:600; margin: 14px 0 4px; }
+  .plan .price span{ font-size: 0.85rem; color: var(--text-dim); font-weight:400; }
+  .plan .desc{ color: var(--text-muted); font-size: 0.85rem; margin-bottom: 22px; }
+  .plan ul{ display:flex; flex-direction:column; gap: 11px; margin-bottom: 26px; flex:1; }
+  .plan li{ font-size: 0.85rem; color: var(--text-muted); display:flex; gap:10px; align-items:flex-start; }
+  .plan li svg{ width:15px; height:15px; color: var(--master); flex-shrink:0; margin-top:2px; }
+  .plan-cta{ text-align:center; padding: 11px; border-radius: 8px; font-weight:600; font-size:0.88rem; border:1px solid var(--border); }
+  .plan.highlight .plan-cta{ background: var(--master); color:#05130E; border-color: var(--master); }
+
+  /* ---------- CTA BAND ---------- */
+  .cta-band{ text-align:center; padding: 90px 0; }
+  .cta-band h2{ margin-bottom: 16px; }
+  .cta-band p{ color: var(--text-muted); max-width: 480px; margin: 0 auto 32px; }
+
+  /* ---------- FOOTER ---------- */
+  footer{ border-top:1px solid var(--border); padding: 44px 0; }
+  .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap: 16px; }
+  .foot-links{ display:flex; gap: 26px; }
+  .foot-links a{ font-size:0.85rem; color: var(--text-muted); }
+  .foot-links a:hover{ color: var(--text); }
+  .foot-note{ font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-dim); margin-top: 22px; }
+
+  .risk-strip{ background: var(--risk-dim); border-top:1px solid rgba(255,107,92,0.25); border-bottom:1px solid rgba(255,107,92,0.25); padding: 12px 0; }
+  .risk-strip p{ font-family: var(--font-mono); font-size: 0.75rem; color: var(--risk); text-align:center; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="logo">
+      <span class="logo-mark">
+        <svg viewBox="0 0 26 26" fill="none">
+          <circle cx="13" cy="13" r="12" stroke="#35D0A0" stroke-width="1.5"/>
+          <path d="M6 13 L11 13 L13 8 L15 18 L17 13 L20 13" stroke="#4F8CFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </span>
+      MirrorFlow
+    </div>
+    <div class="nav-links">
+      <a href="#flow">How it works</a>
+      <a href="#security">Security</a>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <a href="#pricing" class="nav-cta">Get API access</a>
+  </nav>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="eyebrow"><span class="dot"></span> Binance Futures · REST + WebSocket · IP-Whitelisted</div>
+        <h1>One master's trade,<br><span class="accent">mirrored</span> to every <span class="accent2">follower</span> — in milliseconds.</h1>
+        <p class="lead">MirrorFlow is copy-trading infrastructure for Binance USDT-M perpetual futures. Masters trade once. Followers' positions open, scale, and close in sync — sized to their own account, gated by their own risk limits.</p>
+        <div class="hero-ctas">
+          <a href="#pricing" class="btn-primary">Become a Master →</a>
+          <a href="#flow" class="btn-secondary">See how mirroring works</a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="num">41ms</div><div class="label">median mirror latency</div></div>
+          <div class="hero-stat"><div class="num">Trade-only</div><div class="label">API key scope, no withdrawals</div></div>
+          <div class="hero-stat"><div class="num">24/7</div><div class="label">position sync engine</div></div>
+        </div>
+      </div>
+
+      <div class="tape-card">
+        <div class="tape-head">
+          <span class="title">Live mirror tape</span>
+          <span class="latency">● synced</span>
+        </div>
+
+        <div class="tape-row">
+          <div class="ticket master">
+            <div class="role">Master · Ali_FX</div>
+            <div class="pair">BTCUSDT <span class="side-long">LONG</span></div>
+            <div class="meta">5x · 0.42 BTC @ 61,240</div>
+          </div>
+          <div class="beam"></div>
+          <div class="ticket follower">
+            <div class="role">Follower · #3311</div>
+            <div class="pair">BTCUSDT <span class="side-long">LONG</span></div>
+            <div class="meta">5x · 0.03 BTC @ 61,241</div>
+          </div>
+        </div>
+
+        <div class="tape-row">
+          <div class="ticket master">
+            <div class="role">Master · Ali_FX</div>
+            <div class="pair">ETHUSDT <span class="side-short">SHORT</span></div>
+            <div class="meta">3x · 2.10 ETH @ 3,382</div>
+          </div>
+          <div class="beam"></div>
+          <div class="ticket follower">
+            <div class="role">Follower · #4790</div>
+            <div class="pair">ETHUSDT <span class="side-short">SHORT</span></div>
+            <div class="meta">3x · 0.18 ETH @ 3,382</div>
+          </div>
+        </div>
+
+        <div class="tape-row">
+          <div class="ticket master">
+            <div class="role">Master · Ali_FX</div>
+            <div class="pair">SOLUSDT <span class="side-long">CLOSE</span></div>
+            <div class="meta">TP hit · +3.1R</div>
+          </div>
+          <div class="beam"></div>
+          <div class="ticket follower">
+            <div class="role">Follower · #2204</div>
+            <div class="pair">SOLUSDT <span class="side-long">CLOSE</span></div>
+            <div class="meta">TP hit · +3.1R</div>
+          </div>
+        </div>
+
+        <div class="tape-foot">
+          <span>Position size scaled per follower equity</span>
+          <span>Read+Trade key only</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="risk-strip wrap" style="max-width:100%;">
+    <p>Perpetual futures trading carries substantial risk. Followers copy Master risk exposure — not performance guarantees. Trade responsibly.</p>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <section id="flow">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">Order flow</div>
+        <h2>Three roles, one execution pipeline</h2>
+        <p>Every order a Master places passes through the same signed, whitelisted pipeline before it's resized and routed to each connected Follower account.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.2"/><path d="M5 21c0-4 3.1-6.5 7-6.5s7 2.5 7 6.5"/></svg>
+          <div class="step-num">01 — Master</div>
+          <h3>Trade on your own account</h3>
+          <p>Connect a standard Binance Futures API key, scoped to Futures trading only. Trade exactly as you normally would — no dashboard to learn.</p>
+        </div>
+        <div class="flow-step">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+          <div class="step-num">02 — Engine</div>
+          <h3>Signed, whitelisted relay</h3>
+          <p>Orders are captured via authenticated WebSocket, validated, and resized against each Follower's equity and leverage caps before routing.</p>
+        </div>
+        <div class="flow-step">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="8" r="2.6"/><circle cx="17" cy="8" r="2.6"/><path d="M2.5 20c0-3.3 2.4-5.5 4.5-5.5s4.5 2.2 4.5 5.5M12.5 20c0-3.3 2.4-5.5 4.5-5.5s4.5 2.2 4.5 5.5"/></svg>
+          <div class="step-num">03 — Followers</div>
+          <h3>Positions mirror automatically</h3>
+          <p>Entries, additions, and closes replicate on each Follower's own account, using their own funds and their own pre-set risk limits.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section id="security" class="security">
+    <div class="wrap sec-grid">
+      <div>
+        <div class="section-tag">Key handling</div>
+        <h2>Your API key never leaves the whitelist</h2>
+        <p style="color:var(--text-muted); margin-bottom:32px;">MirrorFlow only ever requests trade-scoped permissions. Withdrawals stay impossible at the exchange level, not just by policy.</p>
+
+        <div class="sec-list">
+          <div class="sec-item">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>
+            <div><h4>IP whitelist enforced per key</h4><p>Each API key is locked to MirrorFlow's static execution IPs at the Binance account level — requests from anywhere else are rejected before they reach your account.</p></div>
+          </div>
+          <div class="sec-item">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg></div>
+            <div><h4>Withdrawal permission disabled</h4><p>Keys are requested with Futures trading enabled and withdrawals off — the setting Binance enforces, not a promise MirrorFlow makes.</p></div>
+          </div>
+          <div class="sec-item">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12l5 5L20 6"/></svg></div>
+            <div><h4>Per-follower risk ceilings</h4><p>Max leverage, max position size, and daily loss caps are set by each Follower and enforced before any mirrored order is placed.</p></div>
+          </div>
+          <div class="sec-item">
+            <div class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v5l3 3"/><circle cx="12" cy="12" r="9"/></svg></div>
+            <div><h4>One-click disconnect</h4><p>Revoking the key on Binance or unlinking inside MirrorFlow halts mirroring for that account instantly.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="console">
+        <div class="console-head"><span></span><span></span><span></span></div>
+        <div class="console-body">
+<span class="cm">// api key scope — read only</span><br>
+<span class="k">enableReading</span>: <span class="ok">true</span><br>
+<span class="k">enableFutures</span>: <span class="ok">true</span><br>
+<span class="k">enableWithdrawals</span>: <span class="v">false</span><br>
+<span class="k">enableInternalTransfer</span>: <span class="v">false</span><br>
+<span class="k">ipRestrict</span>: <span class="ok">true</span><br>
+<span class="k">whitelist</span>: [<span class="v">"52.14.x.x"</span>, <span class="v">"34.201.x.x"</span>]<br><br>
+<span class="cm">// mirror relay — session</span><br>
+<span class="k">master</span>: <span class="v">"Ali_FX"</span><br>
+<span class="k">followers_connected</span>: <span class="ok">128</span><br>
+<span class="k">status</span>: <span class="ok">"streaming"</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">Built for both sides</div>
+        <h2>Everything the trade relay needs to handle</h2>
+        <p>Sizing, leverage, drawdown — the details that break naive copy bots are handled at the engine level.</p>
+      </div>
+      <div class="feat-grid">
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+          <h4>Proportional sizing</h4>
+          <p>Follower orders scale to their own equity, not the Master's notional — a 0.1 BTC master trade can mirror as 0.005 BTC.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          <h4>Multi-master routing</h4>
+          <p>Followers can allocate across several Masters at once, with per-master weight and exposure caps.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+          <h4>Sub-second reconciliation</h4>
+          <p>A background sync loop closes any drift between Master and Follower positions caused by rejected or partial fills.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+          <h4>Performance ledger</h4>
+          <p>Masters get a public track record. Followers get a full mirrored-trade history with slippage vs. the original fill.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/></svg>
+          <h4>Circuit breakers</h4>
+          <p>Daily loss limit, max concurrent positions, and volatility pause — configurable per Follower, enforced before routing.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 4v6h-6"/></svg>
+          <h4>Instant unlink</h4>
+          <p>A Follower can pause or exit mirroring mid-position with one action — open trades are left exactly as they are, untouched.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg>
+          <h4>Latency dashboard</h4>
+          <p>Every mirrored order logs signal-to-fill latency, so both sides can see execution quality, not just P/L.</p>
+        </div>
+        <div class="feat">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/></svg>
+          <h4>Master revenue share</h4>
+          <p>Masters earn a configurable performance fee on profitable Follower trades, settled automatically each cycle.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">Access</div>
+        <h2>Priced for how you connect</h2>
+        <p>Followers pay a flat monthly fee to mirror. Masters connect free and earn a share of Follower profits.</p>
+      </div>
+
+      <div class="plans">
+        <div class="plan">
+          <div class="role">Follower</div>
+          <h3>Starter</h3>
+          <div class="price">$19<span>/mo</span></div>
+          <div class="desc">Mirror one Master with core risk controls.</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Connect 1 Master</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Position size scaling</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Daily loss cap</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Trade history export</li>
+          </ul>
+          <a href="#" class="plan-cta">Start mirroring</a>
+        </div>
+
+        <div class="plan highlight">
+          <div class="role">Follower</div>
+          <h3>Pro</h3>
+          <div class="price">$49<span>/mo</span></div>
+          <div class="desc">Multi-master allocation with full risk suite.</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Connect up to 5 Masters</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Per-master weight & caps</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Volatility circuit breaker</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Latency & slippage analytics</li>
+          </ul>
+          <a href="#" class="plan-cta">Start mirroring</a>
+        </div>
+
+        <div class="plan">
+          <div class="role">Master</div>
+          <h3>Signal Provider</h3>
+          <div class="price">Free<span>+ rev share</span></div>
+          <div class="desc">Trade your own account, earn from followers.</div>
+          <ul>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Public performance ledger</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Unlimited followers</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>Configurable profit fee</li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg>No dashboard change needed</li>
+          </ul>
+          <a href="#" class="plan-cta">Apply as Master</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-band">
+    <div class="wrap">
+      <h2>Ready to connect your first key?</h2>
+      <p>Set up takes under five minutes — generate a trade-only, IP-whitelisted API key and link it from your dashboard.</p>
+      <a href="#pricing" class="btn-primary">Get started →</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <div class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 26 26" fill="none">
+            <circle cx="13" cy="13" r="12" stroke="#35D0A0" stroke-width="1.5"/>
+            <path d="M6 13 L11 13 L13 8 L15 18 L17 13 L20 13" stroke="#4F8CFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </span>
+        MirrorFlow
+      </div>
+      <div class="foot-links">
+        <a href="#flow">How it works</a>
+        <a href="#security">Security</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#">Docs</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <p class="foot-note">MirrorFlow is not affiliated with or endorsed by Binance. Futures trading involves significant risk of loss. Past performance of any Master does not guarantee future results. © 2026 AutoMind Solutions.</p>
+  </div>
+</footer>
+
+</body>
+</html>
