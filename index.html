@@ -78,6 +78,8 @@
     transition: transform .15s, box-shadow .15s;
   }
   .nav-cta:hover{ transform: translateY(-1px); box-shadow: 0 6px 20px rgba(53,208,160,0.25); }
+  .nav-login{ font-family: var(--font-body); font-size: 0.9rem; font-weight:500; color: var(--text-muted); transition: color .2s; }
+  .nav-login:hover{ color: var(--text); }
   .nav-toggle{ display:none; }
 
   @media (max-width: 860px){
@@ -255,6 +257,34 @@
   .risk-strip{ background: var(--risk-dim); border-top:1px solid rgba(255,107,92,0.25); border-bottom:1px solid rgba(255,107,92,0.25); padding: 12px 0; }
   .risk-strip p{ font-family: var(--font-mono); font-size: 0.75rem; color: var(--risk); text-align:center; }
 
+  /* ---------- ONBOARDING ROW ---------- */
+  .onboard-row{ display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap: 14px; background: var(--surface); border:1px solid var(--border); border-radius: 16px; padding: 30px 26px; }
+  .onboard-step{ display:flex; flex-direction:column; align-items:center; gap: 10px; text-align:center; min-width: 84px; }
+  .ostep-icon{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family: var(--font-mono); font-weight:600; font-size: 0.95rem; background: var(--surface-2); border: 1px solid var(--border); color: var(--follower); }
+  .onboard-step.highlight .ostep-icon{ background: var(--master); border-color: var(--master); color: #05130E; }
+  .onboard-step p{ font-size: 0.82rem; color: var(--text-muted); }
+  .onboard-step.highlight p{ color: var(--master); font-weight:600; }
+  .onboard-arrow{ color: var(--text-dim); font-size: 1.1rem; }
+  @media (max-width: 860px){ .onboard-row{ justify-content:center; } .onboard-arrow{ display:none; } }
+
+  /* ---------- STATS BAND ---------- */
+  .stats-band{ padding: 60px 0; background: linear-gradient(135deg, rgba(53,208,160,0.08), rgba(79,140,255,0.08)); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .stats-grid{ display:grid; grid-template-columns: repeat(4,1fr); gap: 24px; text-align:center; }
+  @media (max-width: 700px){ .stats-grid{ grid-template-columns: repeat(2,1fr); } }
+  .stat-block .num{ font-family: var(--font-display); font-size: 2.2rem; font-weight:700; }
+  .stat-block .label{ font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); margin-top:6px; }
+
+  /* ---------- ENABLE / DISABLE CHECKLIST ---------- */
+  .permit-card{ background: var(--surface); border:1px solid var(--border); border-radius: 14px; padding: 24px; margin-top: 20px; grid-column: 1 / -1; }
+  .permit-row{ display:grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 560px){ .permit-row{ grid-template-columns: 1fr; } }
+  .permit-col h5{ font-family: var(--font-mono); font-size: 0.72rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom: 12px; }
+  .permit-col.allow h5{ color: var(--master); }
+  .permit-col.deny h5{ color: var(--risk); }
+  .permit-col li{ font-size: 0.85rem; color: var(--text-muted); display:flex; gap:8px; align-items:flex-start; margin-bottom: 9px; }
+  .permit-col.allow li::before{ content:'✓'; color: var(--master); flex-shrink:0; }
+  .permit-col.deny li::before{ content:'✕'; color: var(--risk); flex-shrink:0; }
+
   @media (prefers-reduced-motion: reduce){
     *{ animation: none !important; transition: none !important; }
   }
@@ -279,7 +309,10 @@
       <a href="#features">Features</a>
       <a href="#pricing">Pricing</a>
     </div>
-    <a href="#pricing" class="nav-cta">Get API access</a>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <a href="#" class="nav-login">Log in</a>
+      <a href="#pricing" class="nav-cta">Register</a>
+    </div>
   </nav>
 </header>
 
@@ -437,6 +470,27 @@
 <span class="k">status</span>: <span class="ok">"streaming"</span>
         </div>
       </div>
+        <div class="permit-card">
+          <div class="permit-row">
+            <div class="permit-col allow">
+              <h5>Enable only</h5>
+              <ul>
+                <li>Read access</li>
+                <li>Futures trading</li>
+                <li>USDT-M perpetual futures</li>
+                <li>IP whitelist (recommended)</li>
+              </ul>
+            </div>
+            <div class="permit-col deny">
+              <h5>Do not enable</h5>
+              <ul>
+                <li>Withdrawals</li>
+                <li>Universal transfer</li>
+                <li>Spot trading (optional)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
     </div>
   </section>
 
@@ -490,6 +544,71 @@
           <p>Masters earn a configurable performance fee on profitable Follower trades, settled automatically each cycle.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- COPY MODES -->
+  <section id="copy-modes" class="security">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">Sizing logic</div>
+        <h2>Three ways to mirror a trade</h2>
+        <p>Followers choose how a Master's order translates onto their own account — this setting can be changed anytime without affecting open positions.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/></svg>
+          <div class="step-num">Mode A</div>
+          <h3>Exact copy</h3>
+          <p>Follower opens the identical quantity and leverage as the Master. Best when Follower equity closely matches the Master's.</p>
+        </div>
+        <div class="flow-step">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20L20 4M8 4h4v4M16 20h4v-4"/></svg>
+          <div class="step-num">Mode B</div>
+          <h3>Percentage copy</h3>
+          <p>Order size scales to a fixed % of Follower equity relative to the Master's, so risk stays proportional regardless of account size.</p>
+        </div>
+        <div class="flow-step">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg>
+          <div class="step-num">Mode C</div>
+          <h3>Fixed USDT copy</h3>
+          <p>Every mirrored entry uses a flat USDT notional set by the Follower, independent of what the Master risked on that trade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ONBOARDING -->
+  <section id="onboarding">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-tag">Getting started</div>
+        <h2>From sign-up to your first mirrored trade</h2>
+        <p>A one-time setup — after this, mirroring runs on its own.</p>
+      </div>
+      <div class="onboard-row">
+        <div class="onboard-step"><div class="ostep-icon">1</div><p>Register</p></div>
+        <div class="onboard-arrow">→</div>
+        <div class="onboard-step"><div class="ostep-icon">2</div><p>Get approved</p></div>
+        <div class="onboard-arrow">→</div>
+        <div class="onboard-step"><div class="ostep-icon">3</div><p>Connect Binance</p></div>
+        <div class="onboard-arrow">→</div>
+        <div class="onboard-step"><div class="ostep-icon">4</div><p>Choose a Master</p></div>
+        <div class="onboard-arrow">→</div>
+        <div class="onboard-step"><div class="ostep-icon">5</div><p>Start mirroring</p></div>
+        <div class="onboard-arrow">→</div>
+        <div class="onboard-step highlight"><div class="ostep-icon">✓</div><p>Earn together</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAND -->
+  <section class="stats-band">
+    <div class="wrap stats-grid">
+      <div class="stat-block"><div class="num">24/7</div><div class="label">Signal scanner</div></div>
+      <div class="stat-block"><div class="num">3</div><div class="label">Copy modes</div></div>
+      <div class="stat-block"><div class="num">100%</div><div class="label">Automatic sync</div></div>
+      <div class="stat-block"><div class="num">∞</div><div class="label">Unlimited followers</div></div>
     </div>
   </section>
 
